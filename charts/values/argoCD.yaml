@@ -1,0 +1,15 @@
+## Argo CD configuration
+## Ref: https://github.com/argoproj/argo-cd
+##
+# argo-cd:
+server:
+  ingress:
+    enabled: true
+    ingressClassName: "nginx"
+    hosts:
+      - argocd.mguarinos.xyz
+    paths:
+      - /
+configs:
+  params:
+    "server.insecure": true

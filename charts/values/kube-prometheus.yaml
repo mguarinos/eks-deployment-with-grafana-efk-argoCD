@@ -1,0 +1,96 @@
+alertmanager:
+  #Attaching external AM configuration using alertmanagerConfig CRD
+  alertmanagerSpec:
+    alertmanagerConfigSelector:
+      matchLabels:
+        alertmanagerConfig: "true"
+prometheus:
+  # Adding an ingress resource for Prometheus GUI
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - prometheus.mguarinos.xyz
+    paths:
+      - /
+  prometheusSpec:
+    serviceMonitorSelector:
+      matchLabels:
+        release: kube-prometheus-stack
+    # Configure Persistent Volume for Prometheus storage
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp2
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
+    # Adding a common custom label for all the scrapped metrics
+    externalLabels:
+      clusterName: "Prometheus-Demo"
+grafana:
+  # Adding an ingress resource for Grafana GUI
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - grafana.mguarinos.xyz
+    paths: /
+  # Configure Persistent Volume for Grafana storage
+  persistence:
+    enabled: true
+    type: statefulset
+    storageClassName: gp2
+    accessModes:
+    - ReadWriteOnce
+    size: 5Gi
+    finalizers:
+    - kubernetes.io/pvc-protection
+  env:
+    GF_FEATURE_TOGGLES_ENABLE: "ngalert"
+  grafana.ini:
+    server:
+      root_url: http://grafana.mguarinos.xyz
+  plugins:
+    - grafana-piechart-panel
+  # Provision grafana-dashboards-kubernetes
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+      - name: 'grafana-dashboards-kubernetes'
+        orgId: 1
+        folder: 'Kubernetes'
+        type: file
+        disableDeletion: true
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/grafana-dashboards-kubernetes
+  dashboards:
+    grafana-dashboards-kubernetes:
+      k8s-system-api-server:
+        url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-api-server.json
+        token: ''
+        datasource: Prometheus
+      k8s-system-coredns:
+        url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-coredns.json
+        token: ''
+        datasource: Prometheus
+      k8s-views-global:
+        url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-global.json
+        token: ''
+        datasource: Prometheus
+      k8s-views-namespaces:
+        url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-namespaces.json
+        token: ''
+        datasource: Prometheus
+      k8s-views-nodes:
+        url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-nodes.json
+        token: ''
+        datasource: Prometheus
+      k8s-views-pods:
+        url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-pods.json
+        token: ''
+        datasource: Prometheus
